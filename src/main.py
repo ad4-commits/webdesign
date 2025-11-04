@@ -1,98 +1,82 @@
 from textnode import TextNode, TextType, text_node_to_html_node
 from htmlnode import LeafNode, ParentNode
-from text_processing import (split_nodes_delimiter, extract_markdown_images, 
-                           extract_markdown_links, split_nodes_image, split_nodes_link)
+from text_processing import text_to_textnodes
 
 def main():
-    print("Advanced TextNode Splitting Examples:")
+    print("Complete Text Processing Pipeline - text_to_textnodes:")
     
-    # Test cases for image splitting
-    print("\n" + "="*50)
-    print("Image Splitting Examples:")
-    
-    image_cases = [
-        TextNode(
-            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)",
-            TextType.TEXT,
+    # Test cases for the complete processing pipeline
+    test_cases = [
+        (
+            "Complex Example",
+            "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
         ),
-        TextNode(
-            "![first](img1.png) middle ![second](img2.png) end",
-            TextType.TEXT,
+        (
+            "Simple Text", 
+            "Just plain text without formatting"
         ),
-        TextNode(
-            "No images here",
-            TextType.TEXT,
+        (
+            "Mixed Formatting",
+            "**Bold text**, _italic text_, and `code` in one sentence."
         ),
-    ]
-    
-    for i, node in enumerate(image_cases, 1):
-        print(f"\nImage Case {i}:")
-        print(f"Input:  {node}")
-        result = split_nodes_image([node])
-        print(f"Output: {result}")
-        
-        # Convert to HTML to show final result
-        html_nodes = [text_node_to_html_node(n) for n in result]
-        html_result = "".join([n.to_html() for n in html_nodes])
-        print(f"HTML:   {html_result}")
-    
-    # Test cases for link splitting
-    print("\n" + "="*50)
-    print("Link Splitting Examples:")
-    
-    link_cases = [
-        TextNode(
-            "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)",
-            TextType.TEXT,
+        (
+            "Images and Links",
+            "Visit my [website](https://example.com) and see this ![photo](photo.jpg)."
         ),
-        TextNode(
-            "[start](1.com) middle [end](2.com)",
-            TextType.TEXT,
-        ),
-        TextNode(
-            "Text with [a link](example.com) in the middle",
-            TextType.TEXT,
+        (
+            "Real World Example",
+            "**Important**: Please read the _documentation_ and try the `example.py` file. Download the ![logo](logo.png) and visit our [site](https://project.org)."
         ),
     ]
     
-    for i, node in enumerate(link_cases, 1):
-        print(f"\nLink Case {i}:")
-        print(f"Input:  {node}")
-        result = split_nodes_link([node])
-        print(f"Output: {result}")
+    for description, text in test_cases:
+        print(f"\n{'='*60}")
+        print(f"Test: {description}")
+        print(f"Input:  {text}")
         
-        # Convert to HTML to show final result
-        html_nodes = [text_node_to_html_node(n) for n in result]
+        # Process the text
+        nodes = text_to_textnodes(text)
+        print(f"Nodes:  {nodes}")
+        
+        # Convert to HTML
+        html_nodes = [text_node_to_html_node(n) for n in nodes]
         html_result = "".join([n.to_html() for n in html_nodes])
         print(f"HTML:   {html_result}")
+        
+        # Show the rendered result
+        print(f"Rendered: {html_result}")
     
-    # Complex example showing the full processing pipeline
-    print("\n" + "="*50)
-    print("Full Processing Pipeline Example:")
+    # Demonstrate the complete pipeline with a complex example
+    print(f"\n{'='*60}")
+    print("FINAL DEMONSTRATION - Complete Markdown to HTML Conversion")
+    print('='*60)
     
-    complex_text = TextNode(
-        "Welcome! This is **bold** text with `code` and _italic_. "
-        "Also ![an image](https://example.com/img.png) and "
-        "[a link](https://example.com). More **bold** here!",
-        TextType.TEXT
-    )
+    markdown_text = """
+# Welcome to My Site
+
+This is a **bold statement** with some _italic emphasis_ and `inline code`.
+
+Check out this image: ![Python Logo](https://example.com/python.png)
+
+Visit my [portfolio](https://myportfolio.com) for more examples.
+
+**Remember**: Always test your _code_ with `python -m unittest`!
+"""
     
-    print(f"Original: {complex_text}")
+    # Process each line (in a real implementation, we'd handle blocks)
+    lines = [line.strip() for line in markdown_text.split('\n') if line.strip()]
     
-    # Processing order: images -> links -> bold -> italic -> code
-    nodes = [complex_text]
-    nodes = split_nodes_image(nodes)
-    nodes = split_nodes_link(nodes) 
-    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
-    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
-    
-    print(f"After processing: {nodes}")
-    
-    # Convert to final HTML
-    html_nodes = [text_node_to_html_node(n) for n in nodes]
-    html_result = "".join([n.to_html() for n in html_nodes])
-    print(f"Final HTML: {html_result}")
+    for i, line in enumerate(lines, 1):
+        print(f"\nLine {i}: {line}")
+        if line.startswith('# '):
+            # Simple heading detection (for demonstration)
+            content = line[2:]
+            print(f"  → <h1>{content}</h1>")
+        else:
+            nodes = text_to_textnodes(line)
+            html_nodes = [text_node_to_html_node(n) for n in nodes]
+            html_result = "".join([n.to_html() for n in html_nodes])
+            print(f"  → <p>{html_result}</p>")
 
 if __name__ == "__main__":
     main()
