@@ -1,49 +1,39 @@
-from textnode import TextNode, TextType
+from textnode import TextNode, TextType, text_node_to_html_node
 from htmlnode import LeafNode, ParentNode
 
 def main():
-    # Original TextNode demonstration
-    text_node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
-    print("TextNode:", text_node)
+    print("TextNode to HTMLNode Conversion Examples:")
     
-    # New ParentNode demonstrations
-    print("\nParentNode Examples:")
+    # Test all TextType conversions
+    text_nodes = [
+        TextNode("This is plain text", TextType.TEXT),
+        TextNode("This is bold text", TextType.BOLD),
+        TextNode("This is italic text", TextType.ITALIC),
+        TextNode("print('hello world')", TextType.CODE),
+        TextNode("Click here", TextType.LINK, "https://example.com"),
+        TextNode("A beautiful sunset", TextType.IMAGE, "https://example.com/sunset.jpg"),
+    ]
     
-    # Simple parent with children
-    simple_parent = ParentNode(
+    for text_node in text_nodes:
+        html_node = text_node_to_html_node(text_node)
+        print(f"TextNode: {text_node}")
+        print(f"HTMLNode: {html_node.to_html()}")
+        print()
+    
+    # Demonstrate using converted nodes in a ParentNode
+    print("Complex example with ParentNode:")
+    paragraph = ParentNode(
         "p",
         [
-            LeafNode("b", "Bold text"),
-            LeafNode(None, "Normal text"),
-            LeafNode("i", "italic text"),
-            LeafNode(None, "Normal text"),
-        ],
+            text_node_to_html_node(TextNode("Welcome to ", TextType.TEXT)),
+            text_node_to_html_node(TextNode("my website", TextType.BOLD)),
+            text_node_to_html_node(TextNode("! You can ", TextType.TEXT)),
+            text_node_to_html_node(TextNode("view the code", TextType.CODE)),
+            text_node_to_html_node(TextNode(" or ", TextType.TEXT)),
+            text_node_to_html_node(TextNode("visit our site", TextType.LINK, "https://example.com")),
+        ]
     )
-    print("Simple Parent:", simple_parent.to_html())
-    
-    # Nested parent structure
-    nested_parent = ParentNode(
-        "div",
-        [
-            LeafNode("h1", "Main Title"),
-            ParentNode(
-                "ul",
-                [
-                    LeafNode("li", "Item 1"),
-                    LeafNode("li", "Item 2"),
-                    ParentNode(
-                        "li",
-                        [
-                            LeafNode("b", "Important"),
-                            LeafNode(None, " item")
-                        ]
-                    )
-                ]
-            )
-        ],
-        {"class": "container"}
-    )
-    print("Nested Parent:", nested_parent.to_html())
+    print(paragraph.to_html())
 
 if __name__ == "__main__":
     main()
