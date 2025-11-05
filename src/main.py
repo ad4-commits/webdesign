@@ -1,82 +1,113 @@
-from textnode import TextNode, TextType, text_node_to_html_node
-from htmlnode import LeafNode, ParentNode
-from text_processing import text_to_textnodes
+#!/usr/bin/env python3
+import os
+import shutil
+from markdown_converter import convert_markdown_to_html, extract_title
+
+def generate_page(from_path, template_path, dest_path):
+    """Generate HTML page from markdown using template"""
+    print(f"  Generating: {os.path.basename(from_path)} -> {os.path.basename(dest_path)}")
+    
+    try:
+        # Read markdown file
+        with open(from_path, 'r', encoding='utf-8') as f:
+            markdown_content = f.read()
+        
+        # Extract title
+        title = extract_title(markdown_content)
+        
+        # Convert markdown to HTML
+        html_content = convert_markdown_to_html(markdown_content)
+        
+        # Read template
+        with open(template_path, 'r', encoding='utf-8') as f:
+            template_content = f.read()
+        
+        # Apply template
+        final_html = template_content.replace("{{ Title }}", title)
+        final_html = final_html.replace("{{ Content }}", html_content)
+        
+        # Create destination directory
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        
+        # Write file
+        with open(dest_path, 'w', encoding='utf-8') as f:
+            f.write(final_html)
+            
+        return True
+        
+    except Exception as e:
+        print(f"    ✗ Error: {e}")
+        return False
 
 def main():
-    print("Complete Text Processing Pipeline - text_to_textnodes:")
+    print("Static Site Generator")
+    print("=" * 40)
     
-    # Test cases for the complete processing pipeline
-    test_cases = [
-        (
-            "Complex Example",
-            "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
-        ),
-        (
-            "Simple Text", 
-            "Just plain text without formatting"
-        ),
-        (
-            "Mixed Formatting",
-            "**Bold text**, _italic text_, and `code` in one sentence."
-        ),
-        (
-            "Images and Links",
-            "Visit my [website](https://example.com) and see this ![photo](photo.jpg)."
-        ),
-        (
-            "Real World Example",
-            "**Important**: Please read the _documentation_ and try the `example.py` file. Download the ![logo](logo.png) and visit our [site](https://project.org)."
-        ),
+    # Define paths
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    static_dir = os.path.join(project_root, "static")
+    public_dir = os.path.join(project_root, "public")
+    template_file = os.path.join(project_root, "templates", "template.html")
+    
+    print(f"Project: {os.path.basename(project_root)}")
+    
+    # Step 1: Clean and create public directory
+    print("\n1. Setting up public directory...")
+    if os.path.exists(public_dir):
+        shutil.rmtree(public_dir)
+        print("  ✓ Cleaned existing directory")
+    
+    os.makedirs(public_dir)
+    print("  ✓ Created public directory")
+    
+    # Step 2: Copy static files
+    print("\n2. Copying static files...")
+    if os.path.exists(static_dir):
+        shutil.copytree(static_dir, public_dir, dirs_exist_ok=True)
+        print("  ✓ Static files copied")
+    else:
+        print("  ✗ Static directory not found")
+        return 1
+    
+    # Step 3: Generate all HTML pages
+    print("\n3. Generating HTML pages...")
+    
+    # Define all pages to generate
+    pages = [
+        ("content/index.md", "public/index.html"),
+        ("content/blog/glorfindel/index.md", "public/blog/glorfindel/index.html"),
+        ("content/blog/tom/index.md", "public/blog/tom/index.html"),
+        ("content/blog/majesty/index.md", "public/blog/majesty/index.html"),
+        ("content/contact/index.md", "public/contact/index.html"),
     ]
     
-    for description, text in test_cases:
-        print(f"\n{'='*60}")
-        print(f"Test: {description}")
-        print(f"Input:  {text}")
+    success_count = 0
+    for from_path, dest_path in pages:
+        full_from_path = os.path.join(project_root, from_path)
+        full_dest_path = os.path.join(project_root, dest_path)
         
-        # Process the text
-        nodes = text_to_textnodes(text)
-        print(f"Nodes:  {nodes}")
-        
-        # Convert to HTML
-        html_nodes = [text_node_to_html_node(n) for n in nodes]
-        html_result = "".join([n.to_html() for n in html_nodes])
-        print(f"HTML:   {html_result}")
-        
-        # Show the rendered result
-        print(f"Rendered: {html_result}")
-    
-    # Demonstrate the complete pipeline with a complex example
-    print(f"\n{'='*60}")
-    print("FINAL DEMONSTRATION - Complete Markdown to HTML Conversion")
-    print('='*60)
-    
-    markdown_text = """
-# Welcome to My Site
-
-This is a **bold statement** with some _italic emphasis_ and `inline code`.
-
-Check out this image: ![Python Logo](https://example.com/python.png)
-
-Visit my [portfolio](https://myportfolio.com) for more examples.
-
-**Remember**: Always test your _code_ with `python -m unittest`!
-"""
-    
-    # Process each line (in a real implementation, we'd handle blocks)
-    lines = [line.strip() for line in markdown_text.split('\n') if line.strip()]
-    
-    for i, line in enumerate(lines, 1):
-        print(f"\nLine {i}: {line}")
-        if line.startswith('# '):
-            # Simple heading detection (for demonstration)
-            content = line[2:]
-            print(f"  → <h1>{content}</h1>")
+        if generate_page(full_from_path, template_file, full_dest_path):
+            success_count += 1
+            print(f"    ✓ {os.path.basename(from_path)}")
         else:
-            nodes = text_to_textnodes(line)
-            html_nodes = [text_node_to_html_node(n) for n in nodes]
-            html_result = "".join([n.to_html() for n in html_nodes])
-            print(f"  → <p>{html_result}</p>")
+            print(f"    ✗ {os.path.basename(from_path)}")
+    
+    print(f"  Generated {success_count}/{len(pages)} pages")
+    
+    if success_count == len(pages):
+        print("\n" + "=" * 40)
+        print("✓ SITE GENERATION COMPLETE!")
+        print("\nGenerated pages:")
+        print("  - / (Home)")
+        print("  - /blog/glorfindel/")
+        print("  - /blog/tom/")
+        print("  - /blog/majesty/")
+        print("  - /contact/")
+        print("\nStart server with: cd public && python3 -m http.server 8888")
+        return 0
+    else:
+        print("\n✗ Some pages failed to generate")
+        return 1
 
 if __name__ == "__main__":
-    main()
+    exit(main())
